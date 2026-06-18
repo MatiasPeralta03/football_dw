@@ -1,0 +1,116 @@
+version: 2
+
+models:
+  - name: stg_matches
+    columns:
+      - name: match_id
+        tests:
+          - unique
+          - not_null
+
+      - name: match_date
+        tests:
+          - not_null
+
+      - name: competition_name
+        tests:
+          - not_null
+
+      - name: home_team_id
+        tests:
+          - not_null
+
+      - name: away_team_id
+        tests:
+          - not_null
+
+      - name: home_score
+        tests:
+          - not_null
+
+      - name: away_score
+        tests:
+          - not_null
+
+  - name: stg_competitions
+    columns:
+      - name: competition_id
+        tests:
+          - not_null
+
+      - name: season_id
+        tests:
+          - not_null
+
+      - name: competition_name
+        tests:
+          - not_null
+
+      - name: country_name
+        tests:
+          - not_null
+
+      - name: competition_gender
+        tests:
+          - not_null
+
+  - name: stg_events
+    columns:
+      - name: id
+        tests:
+          - unique
+          - not_null
+
+      - name: match_id
+        tests:
+          - not_null
+
+      - name: index
+        tests:
+          - not_null
+
+      - name: period
+        tests:
+          - not_null
+
+      - name: minute
+        tests:
+          - not_null
+
+      - name: type
+        tests:
+          - not_null
+
+  - name: stg_events_shots
+    columns:
+      - name: id
+        tests:
+          - unique
+          - not_null
+
+      - name: match_id
+        tests:
+          - not_null
+
+      - name: period
+        tests:
+          - not_null
+
+      - name: minute
+        tests:
+          - not_null
+
+      - name: team_id
+        tests:
+          - not_null
+
+      - name: player_id
+        tests:
+          - not_null
+
+      - name: shot_outcome
+        tests:
+          - not_null
+
+      
+

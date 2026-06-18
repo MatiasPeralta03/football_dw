@@ -1,0 +1,29 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Notas personales (no van al repo público)
+NOTES.md
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# dbt
+football_dw/target/
+football_dw/dbt_packages/
+football_dw/logs/
+logs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Env
+.env

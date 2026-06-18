@@ -1,0 +1,16 @@
+[project]
+name = "football-dw"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dbt-duckdb>=1.10.1",
+    "python-dotenv>=1.2.2",
+    "statsbombpy>=1.19.0",
+]
+
+[dependency-groups]
+dev = [
+    "jupyterlab>=4.5.8",
+]
