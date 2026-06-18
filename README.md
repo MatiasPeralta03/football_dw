@@ -1,30 +1,30 @@
 # ⚽ Football Data Warehouse — Qatar 2022
 
-Data warehouse construido sobre los datos abiertos de [StatsBomb](https://github.com/statsbomb/open-data) del **Mundial de Qatar 2022**. El objetivo es modelar esos datos crudos en capas analíticas usando el patrón Medallion (raw → staging → intermediate → marts), aprovechando dbt para las transformaciones y DuckDB como motor de análisis embebido.
+Data warehouse built on [StatsBomb](https://github.com/statsbomb/open-data) open data from the **2022 FIFA World Cup**. The goal is to model raw data into analytical layers using the Medallion pattern (raw → staging → intermediate → marts), leveraging dbt for transformations and DuckDB as the embedded analytics engine.
 
-Proyecto de portfolio orientado a mostrar buenas prácticas de Data Engineering: separación de capas, linaje de datos, testing declarativo con dbt y gestión de dependencias moderna con `uv`.
+A portfolio project showcasing Data Engineering best practices: layer separation, data lineage, declarative testing with dbt, and modern dependency management with `uv`.
 
 ---
 
-## Stack tecnológico
+## Tech Stack
 
-| Herramienta | Rol |
+| Tool | Role |
 |---|---|
-| **Python 3.12+** | Lenguaje base |
-| **uv** | Gestión de entorno virtual y dependencias |
-| **statsbombpy** | Librería oficial para consumir la API abierta de StatsBomb |
-| **DuckDB** | Motor OLAP embebido (archivo `.duckdb` local) |
-| **dbt-duckdb** | Framework de transformación — modela, prueba y documenta |
+| **Python 3.12+** | Core language |
+| **uv** | Virtual environment and dependency management |
+| **statsbombpy** | Official library for consuming StatsBomb's open API |
+| **DuckDB** | Embedded OLAP engine (local `.duckdb` file) |
+| **dbt-duckdb** | Transformation framework — models, tests, and docs |
 
 ---
 
-## Arquitectura
+## Architecture
 
-El proyecto sigue el **patrón Medallion** en tres capas dentro de dbt, sobre un schema `raw` cargado por el script de ingestión.
+The project follows the **Medallion pattern** across three dbt layers, built on top of a `raw` schema populated by the ingestion script.
 
 ```mermaid
 flowchart LR
-    subgraph INGESTION ["Ingesta (Python)"]
+    subgraph INGESTION ["Ingestion (Python)"]
         PY["load_statsbomb.py"]
     end
 
@@ -34,20 +34,20 @@ flowchart LR
         R3[("raw.events")]
     end
 
-    subgraph STAGING ["Staging — limpieza y tipado"]
+    subgraph STAGING ["Staging — cleanup & casting"]
         S1["stg_competitions"]
         S2["stg_matches"]
         S3["stg_events"]
         S4["stg_events_shots"]
     end
 
-    subgraph INTERMEDIATE ["Intermediate — lógica de negocio"]
+    subgraph INTERMEDIATE ["Intermediate — business logic"]
         I1["int_goals"]
         I2["int_team_matches"]
         I3["int_top_scorer"]
     end
 
-    subgraph MARTS ["Marts — tablas analíticas finales"]
+    subgraph MARTS ["Marts — final analytical tables"]
         M1["mart_matches"]
         M2["mart_team_goals_stats"]
         M3["mart_top_scorer"]
@@ -66,118 +66,118 @@ flowchart LR
     I1 --> M4
 ```
 
-### Descripción de cada capa
+### Layer descriptions
 
-- **Raw**: tablas crudas tal como las entrega StatsBomb, cargadas con `statsbombpy` a un archivo DuckDB local.
-- **Staging**: una vista por tabla fuente que selecciona y renombra columnas, aplica filtros básicos (`stg_events_shots` filtra solo eventos tipo `Shot`) y establece los tipos correctos.
-- **Intermediate**: modelos de lógica de negocio reutilizables. Por ejemplo, `int_team_matches` desnormaliza los partidos para tener una fila por equipo (local y visitante), e `int_goals` aísla solo los disparos que terminaron en gol.
-- **Marts**: tablas listas para consumo analítico, sin lógica compleja: agregaciones y rankings directamente consultables.
+- **Raw**: raw tables as delivered by StatsBomb, loaded via `statsbombpy` into a local DuckDB file.
+- **Staging**: one view per source table that selects and renames columns, applies basic filters (`stg_events_shots` keeps only `Shot` events), and enforces correct types.
+- **Intermediate**: reusable business-logic models. For example, `int_team_matches` unpivots matches to one row per team (home and away), and `int_goals` isolates only shots that resulted in a goal.
+- **Marts**: consumption-ready tables with no complex logic — aggregations and rankings that can be queried directly.
 
 ---
 
-## Instalación y uso
+## Setup & Usage
 
-### Prerequisitos
+### Prerequisites
 
 - Python 3.12+
-- [`uv`](https://docs.astral.sh/uv/getting-started/installation/) instalado
+- [`uv`](https://docs.astral.sh/uv/getting-started/installation/) installed
 
-### 1. Clonar el repositorio
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<tu-usuario>/football-dw.git
+git clone https://github.com/<your-username>/football-dw.git
 cd football-dw
 ```
 
-### 2. Crear el entorno e instalar dependencias
+### 2. Create the environment and install dependencies
 
 ```bash
 uv sync
 ```
 
-Esto crea automáticamente el `.venv` e instala todo lo declarado en `pyproject.toml`.
+This automatically creates the `.venv` and installs everything declared in `pyproject.toml`.
 
-### 3. Correr la ingestión
+### 3. Run the ingestion
 
-Descarga los datos abiertos de StatsBomb (competencias, partidos y ~3.5M eventos del Mundial 2022) y los carga en un archivo DuckDB local en `data/football.duckdb`.
+Downloads StatsBomb open data (competitions, matches, and ~3.5M events from the 2022 World Cup) and loads them into a local DuckDB file at `data/football.duckdb`.
 
-> La descarga de eventos partido por partido tarda entre 3 y 8 minutos dependiendo de la conexión.
+> Downloading events match by match takes between 3 and 8 minutes depending on your connection.
 
 ```bash
 uv run python ingestion/load_statsbomb.py
 ```
 
-### 4. Ejecutar los modelos dbt
+### 4. Run the dbt models
 
 ```bash
 cd football_dw
 uv run dbt run
 ```
 
-Para correr también los tests de calidad de datos:
+To also run data quality tests:
 
 ```bash
 uv run dbt test
 ```
 
-### 5. (Opcional) Explorar la documentación de dbt
+### 5. (Optional) Browse dbt documentation
 
 ```bash
 uv run dbt docs generate
 uv run dbt docs serve
 ```
 
-Abre `http://localhost:8080` para ver el grafo de linaje interactivo y la documentación de cada modelo.
+Open `http://localhost:8080` to explore the interactive lineage graph and documentation for every model.
 
 ---
 
-## Modelos finales (Marts)
+## Final Models (Marts)
 
-| Mart | Qué responde |
+| Mart | What it answers |
 |---|---|
-| `mart_matches` | Resultados de cada partido con el equipo ganador (o `'Empate'`) |
-| `mart_team_goals_stats` | Goles a favor, en contra y diferencia de gol por equipo durante todo el torneo |
-| `mart_top_scorer` | Ranking de goleadores del torneo con posición numérica |
-| `mart_avg_first_goal` | Minuto promedio en que cae el primer gol a lo largo del torneo |
+| `mart_matches` | Match results with the winning team (or a draw label) |
+| `mart_team_goals_stats` | Goals scored/conceded and goal difference per team across the tournament |
+| `mart_top_scorer` | Ranked tournament top scorers with numeric position |
+| `mart_avg_first_goal` | Average minute at which the first goal falls across all matches |
 
 ---
 
-## Grafo de linaje (dbt docs)
+## dbt Lineage Graph
 
-> _Reemplazar con screenshot de `dbt docs serve`_
+> _Replace with a screenshot from `dbt docs serve`_
 
 ![dbt lineage graph](docs/dbt_lineage.png)
 
 ---
 
-## Próximos pasos
+## Roadmap
 
-- [ ] **Airflow**: orquestar la ingestión y el `dbt run` en un DAG programado, para tener el warehouse siempre actualizado sin intervención manual.
-- [ ] **Agente con Claude API**: construir un agente conversacional que consulte los marts de DuckDB en lenguaje natural — "¿Quién fue el máximo goleador?" — generando y ejecutando SQL en tiempo real contra el warehouse.
-- [ ] **Más competencias**: extender la ingestión para cargar otras competencias del catálogo abierto de StatsBomb (Champions League, Euros, etc.).
-- [ ] **Métricas avanzadas**: agregar modelos que expongan xG acumulado por equipo y eficiencia de remate (goles / disparos al arco).
+- [ ] **Airflow**: orchestrate the ingestion and `dbt run` in a scheduled DAG for a hands-free, always-up-to-date warehouse.
+- [ ] **Claude API agent**: a conversational agent that queries DuckDB marts in natural language — "Who was the top scorer?" — generating and running SQL against the warehouse on the fly.
+- [ ] **More competitions**: extend ingestion to load other StatsBomb open-data competitions (Champions League, Euros, etc.).
+- [ ] **Advanced metrics**: add models exposing cumulative xG per team and shot efficiency (goals / shots on target).
 
 ---
 
-## Estructura del proyecto
+## Project Structure
 
 ```
 football-dw/
 ├── ingestion/
-│   └── load_statsbomb.py      # Descarga y carga los datos a DuckDB
-├── football_dw/               # Proyecto dbt
+│   └── load_statsbomb.py      # Downloads and loads data into DuckDB
+├── football_dw/               # dbt project
 │   └── models/
-│       ├── staging/           # Limpieza de tablas raw
-│       ├── intermediate/      # Lógica de negocio reutilizable
-│       └── marts/             # Tablas analíticas finales
+│       ├── staging/           # Raw table cleanup
+│       ├── intermediate/      # Reusable business logic
+│       └── marts/             # Final analytical tables
 ├── data/
-│   └── football.duckdb        # Base de datos local (no versionada)
-├── notebooks/                 # Exploración ad-hoc con JupyterLab
-└── pyproject.toml             # Dependencias gestionadas con uv
+│   └── football.duckdb        # Local database (not versioned)
+├── notebooks/                 # Ad-hoc exploration with JupyterLab
+└── pyproject.toml             # Dependencies managed with uv
 ```
 
 ---
 
-## Datos
+## Data
 
-Los datos utilizados son públicos y están distribuidos bajo la licencia de [StatsBomb Open Data](https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf).
+All data used is publicly available under the [StatsBomb Open Data license](https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf).

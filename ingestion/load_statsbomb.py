@@ -1,10 +1,10 @@
 """
-Ingesta de datos abiertos de StatsBomb a DuckDB.
+Ingestion of StatsBomb open data into DuckDB.
 
-Baja competencias, partidos y eventos de una competencia elegida
-y los carga en el schema `raw` de un archivo DuckDB local.
+Downloads competitions, matches, and events for a selected competition
+and loads them into the `raw` schema of a local DuckDB file.
 
-Uso:
+Usage:
     uv run python ingestion/load_statsbomb.py
 """
 
@@ -15,8 +15,8 @@ from statsbombpy import sb
 # ── Config ────────────────────────────────────────────────
 DB_PATH = "data/football.duckdb"
 
-# Mundial Qatar 2022 (datos abiertos de StatsBomb)
-# Para ver otras opciones: print(sb.competitions())
+# FIFA World Cup Qatar 2022 (StatsBomb open data)
+# To explore other options: print(sb.competitions())
 COMPETITION_ID = 43  
 # FIFA World Cup
 SEASON_ID = 106       # 2022
@@ -27,45 +27,45 @@ def main():
     con = duckdb.connect(DB_PATH)
     con.execute("CREATE SCHEMA IF NOT EXISTS raw")
 
-    # 1. Competencias disponibles
-    print("Bajando competencias...")
+    # 1. Available competitions
+    print("Downloading competitions...")
     competitions = sb.competitions()
     con.execute("CREATE OR REPLACE TABLE raw.competitions AS SELECT * FROM competitions")
-    print(f"  -> {len(competitions)} competencias cargadas")
+    print(f"  -> {len(competitions)} competitions loaded")
 
-    # 2. Partidos de la competencia elegida
-    print("Bajando partidos...")
+    # 2. Matches for the selected competition
+    print("Downloading matches...")
     matches = sb.matches(competition_id=COMPETITION_ID, season_id=SEASON_ID)
     con.execute("CREATE OR REPLACE TABLE raw.matches AS SELECT * FROM matches")
-    print(f"  -> {len(matches)} partidos cargados")
+    print(f"  -> {len(matches)} matches loaded")
 
-    # 3. Eventos de cada partido (esto tarda unos minutos)
-    print("Bajando eventos partido por partido...")
+    # 3. Events for each match (this takes a few minutes)
+    print("Downloading events match by match...")
     all_events = []
     match_ids = matches["match_id"].tolist()
 
     for i, match_id in enumerate(match_ids, start=1):
         events = sb.events(match_id=match_id)
         all_events.append(events)
-        print(f"  [{i}/{len(match_ids)}] match {match_id}: {len(events)} eventos")
+        print(f"  [{i}/{len(match_ids)}] match {match_id}: {len(events)} events")
 
     events_df = pd.concat(all_events, ignore_index=True)
 
-    # Las columnas con listas/dicts (ej: location) se guardan como string
-    # en raw; la limpieza fina la hacemos despues en dbt (staging).
+    # Columns with lists/dicts (e.g. location) are stored as strings
+    # in raw; fine-grained cleaning is handled later in dbt (staging).
     for col in events_df.columns:
         if events_df[col].apply(lambda x: isinstance(x, (list, dict))).any():
             events_df[col] = events_df[col].astype(str)
 
     con.execute("CREATE OR REPLACE TABLE raw.events AS SELECT * FROM events_df")
-    print(f"  -> {len(events_df)} eventos totales cargados")
+    print(f"  -> {len(events_df)} total events loaded")
 
-    # Resumen final
-    print("\nTablas en el schema raw:")
+    # Final summary
+    print("\nTables in the raw schema:")
     print(con.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'raw'").df())
 
     con.close()
-    print(f"\nListo. Warehouse en {DB_PATH}")
+    print(f"\nDone. Warehouse at {DB_PATH}")
 
 
 if __name__ == "__main__":
