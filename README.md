@@ -144,9 +144,7 @@ Open `http://localhost:8080` to explore the interactive lineage graph and docume
 
 ## dbt Lineage Graph
 
-> _Replace with a screenshot from `dbt docs serve`_
-
-![dbt lineage graph](docs/dbt_lineage.png)
+![dbt lineage graph](images/lineage.png)
 
 ---
 
