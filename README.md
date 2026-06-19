@@ -150,10 +150,10 @@ Open `http://localhost:8080` to explore the interactive lineage graph and docume
 
 ## Roadmap
 
+- [ ]  **Advanced metrics**: add models exposing cumulative xG per team and shot efficiency (goals / shots on target), building directly on the existing shots and goals models.
 - [ ] **Airflow**: orchestrate the ingestion and `dbt run` in a scheduled DAG for a hands-free, always-up-to-date warehouse.
 - [ ] **Claude API agent**: a conversational agent that queries DuckDB marts in natural language — "Who was the top scorer?" — generating and running SQL against the warehouse on the fly.
-- [ ] **More competitions**: extend ingestion to load other StatsBomb open-data competitions (Champions League, Euros, etc.).
-- [ ] **Advanced metrics**: add models exposing cumulative xG per team and shot efficiency (goals / shots on target).
+- [ ] **More competitions**: extend ingestion to load other StatsBomb open-data competitions (Champions League, Euros, etc.), handling composite primary keys for competition + season.
 
 ---
 
