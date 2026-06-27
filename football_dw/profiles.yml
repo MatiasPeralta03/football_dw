@@ -1,0 +1,13 @@
+football_dw:
+  outputs:
+    dev:
+      type: duckdb
+      path: /opt/airflow/data/football.duckdb
+      threads: 1
+
+    prod:
+      type: duckdb
+      path: prod.duckdb
+      threads: 4
+
+  target: dev

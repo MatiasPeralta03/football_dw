@@ -1,0 +1,3 @@
+duckdb
+statsbombpy
+dbt-duckdb
